@@ -12,7 +12,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.21.2"
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "mongoose": "^8.13.0",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
