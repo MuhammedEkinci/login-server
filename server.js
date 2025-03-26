@@ -3,9 +3,16 @@ const helmet = require("helmet");
 const cors = require("cors");
 const xss = require("xss-clean");
 const rateLimit = require("express-rate-limit");
+require("dotenv").config();
+
+const connectDB = require("./middlewares/config/db");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
+
+// ------------ connect to database ------------ //
+connectDB();
+// ------------ connect to database ------------ //
 
 // Security Middlewares
 app.use(helmet()); // Sets secure HTTP headers
