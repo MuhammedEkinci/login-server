@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: 6,
     },
+    verified: { type: Boolean, default: false },
+    verificationToken: String,
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },
@@ -38,6 +40,11 @@ userSchema.pre("save", async function (next) {
 // Method to compare password
 userSchema.methods.comparePassword = function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Generate email verification token
+userSchema.methods.generateVerificationToken = function () {
+  this.verificationToken = crypto.randomBytes(32).toString("hex");
 };
 
 const User = mongoose.model("User", userSchema);
