@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require("../models/user");
+const sendMail = require("../middlewares/utils/sendEmail");
 const router = express.Router();
 
 // Sample route
@@ -26,8 +27,15 @@ router.post("/signup", async (req, res) => {
     await newUser.save();
 
     // SEND EMAIL VERIFICATION HERE
-    // You'd send this in an email in production:
     const verificationLink = `http://localhost:3000/api/auth/verify-email?token=${newUser.verificationToken}`;
+
+    await sendMail(
+      newUser.email,
+      "Verify Your Email",
+      `<p>Hello ${newUser.name},</p>
+       <p>Thanks for signing up! Please <a href="${verificationLink}">verify your email</a>.</p>`
+    );
+    // SEND EMAIL VERIFICATION HERE
 
     res.status(201).json({
       message: "User created. Please verify your email.",
@@ -64,12 +72,5 @@ router.get("/verify-email", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
-//************** LOGIN ROUTES *****************//
-// get route login
-
-//************** FORGET PASSWORD ROUTES *****************//
-
-//************** LOGOUT ROUTES *****************//
 
 module.exports = router;
