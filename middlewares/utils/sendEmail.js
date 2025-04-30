@@ -4,6 +4,7 @@ require("dotenv").config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendMail = async (to, subject, html) => {
+  console.log("process.env.EMAIL_FROM: ", process.env.EMAIL_FROM);
   const msg = {
     to,
     from: process.env.EMAIL_FROM,
