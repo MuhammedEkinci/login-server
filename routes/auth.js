@@ -29,12 +29,22 @@ router.post("/signup", async (req, res) => {
     // SEND EMAIL VERIFICATION HERE
     const verificationLink = `http://localhost:3000/api/auth/verify-email?token=${newUser.verificationToken}`;
 
-    await sendMail(
-      newUser.email,
-      "Verify Your Email",
-      `<p>Hello ${newUser.name},</p>
-       <p>Thanks for signing up! Please <a href="${verificationLink}">verify your email</a>.</p>`
-    );
+    // email template
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,sans-serif;background:#f6f6f6;padding:20px;">
+      <div style="max-width:600px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;">
+        <h2 style="color:#333;">Hi ${newUser.name},</h2>
+        <p style="color:#555;">Click below to verify your email address:</p>
+        <a href="${verificationLink}" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;border-radius:4px;text-decoration:none;">Verify Email</a>
+        <p style="color:#999;margin-top:20px;">If you did not sign up, you can ignore this email.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+    await sendMail(newUser.email, "Verify Your Email", emailHtml);
     // SEND EMAIL VERIFICATION HERE
 
     res.status(201).json({
