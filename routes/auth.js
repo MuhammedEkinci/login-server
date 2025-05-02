@@ -1,8 +1,10 @@
 const express = require("express");
 const User = require("../models/user");
+const bcrypt = require("bcrypt");
 const sendMail = require("../middlewares/utils/sendEmail");
 const crypto = require("crypto");
 const router = express.Router();
+require("dotenv").config();
 
 // Sample route
 router.get("/", (req, res) => {
@@ -84,6 +86,7 @@ router.get("/verify-email", async (req, res) => {
   }
 });
 
+// *********** FORGOT PASSWORD ROUTE *************** //
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -116,6 +119,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
+// *********** RESET PASSWORD ROUTE *************** //
 router.post("/reset-password", async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -136,6 +140,47 @@ router.post("/reset-password", async (req, res) => {
     res.json({ message: "Password has been reset successfully" });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ************* LOGIN ROUTE *************** //
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check required fields
+    if (!email || !password)
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    // Check if email is verified
+    if (!user.isVerified)
+      return res
+        .status(403)
+        .json({ message: "Please verify your email first" });
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    // Create JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({ message: "Login successful", token });
+  } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
