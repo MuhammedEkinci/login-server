@@ -101,7 +101,8 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetLink = `http://localhost:3000/api/auth/reset-password?token=${token}`; // this will change when launching in produciton
+    const resetLink = `www.serhendiusa.com/reset-password?token=${token}`;
+    // const resetLink = `http://localhost:3000/api/auth/reset-password?token=${token}`;
 
     const emailHtml = `
       <h2>Password Reset Request</h2>
@@ -173,7 +174,7 @@ router.post("/login", async (req, res) => {
 
     // Create JWT
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
