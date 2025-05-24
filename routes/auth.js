@@ -30,7 +30,7 @@ router.post("/signup", async (req, res) => {
     await newUser.save();
 
     // SEND EMAIL VERIFICATION HERE
-    const verificationLink = `http://localhost:3000/api/auth/verify-email?token=${newUser.verificationToken}`;
+    const verificationLink = `https://serhendiloginserver-hbcjgzb4bqekh2fw.eastus2-01.azurewebsites.net/api/auth/verify-email?token=${newUser.verificationToken}`;
 
     // email template
     const emailHtml = `
@@ -52,7 +52,6 @@ router.post("/signup", async (req, res) => {
 
     res.status(201).json({
       message: "User created. Please verify your email.",
-      verificationLink, // For testing, return it here
     });
   } catch (error) {
     console.error("Signup Error:", error);
