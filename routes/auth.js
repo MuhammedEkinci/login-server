@@ -3,8 +3,12 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const sendMail = require("../middlewares/utils/sendEmail");
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const router = express.Router();
 require("dotenv").config();
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Sample route
 router.get("/", (req, res) => {
@@ -160,8 +164,8 @@ router.post("/login", async (req, res) => {
     if (!user)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    // Check if email is verified
-    if (!user.isVerified)
+    // Check if email is verified (skip for Google users)
+    if (!user.verified && user.authProvider === "local")
       return res
         .status(403)
         .json({ message: "Please verify your email first" });
@@ -182,6 +186,75 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ************* GOOGLE OAUTH ROUTE *************** //
+router.post("/google", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: "Google token is required" });
+    }
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Check if user already exists
+    let user = await User.findOne({
+      $or: [{ email }, { googleId }]
+    });
+
+    if (user) {
+      // User exists, update Google info if needed
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authProvider = "google";
+        user.verified = true; // Google accounts are pre-verified
+        user.profilePicture = picture;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      user = new User({
+        name,
+        email,
+        googleId,
+        authProvider: "google",
+        verified: true, // Google accounts are pre-verified
+        profilePicture: picture,
+      });
+      await user.save();
+    }
+
+    // Create JWT token
+    const jwtToken = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      message: "Google authentication successful",
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(500).json({ message: "Google authentication failed" });
   }
 });
 
